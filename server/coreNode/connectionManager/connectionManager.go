@@ -25,14 +25,16 @@ type ConnectionManager struct {
 	edge_node_set EdgeNodeList.EdgeNodeList
 	message_manager messageManager.MessageManager
 	my_c_peer messageManager.Peer
+	call_back func
 }
 
-func ConnectionManager_init(my_peer, core_peer messageManager.Peer) ConnectionManager {
+func ConnectionManager_init(my_peer, core_peer messageManager.Peer, call_cack func) ConnectionManager {
 	log.Print("Initializeing ConnectionManager")
 	connectionManager := ConnectionManager{}
 	connectionManager.peer = my_peer
 	connectionManager.core_node_set = CoreNodeList.CoreNodeList{List: []messageManager.Peer{}}
 	connectionManager.edge_node_set = EdgeNodeList.EdgeNodeList{List: []messageManager.Peer{}}
+	connectionManager.call_back = call_back
 	//ホントはpeerの配列
 	//peerをhostとmyportから作る
 	if core_peer != my_peer {
@@ -154,14 +156,24 @@ func (connectionManager *ConnectionManager)__handle_message(data_sum string) {
 		} else if cmd == messageManager.MSG_ADD_AS_EDGE {
 			log.Print("remove edge node")
 			connectionManager.__remove_edge_peer(peer)
+		} else if cmd == messageManager.MSG_NEW_TRANSACTION {
+			log.Print("NEW TRANSACTION")
+		} else if cmd == messageManager.MSG_NEW_BLOCK {
+			log.Print("NEW BLOCK")
+		} else if cmd == messageManager.RSP_FULL_CHAIN {
+			log.Print("RSP_FULL_CHAIN")
+		} else if cmd == messageManager.MSG_ENHANCED {
+			log.Print("MSG ENHANCED")
 		} else {
-			log.Print("unknown command")
+			connectionManager.call_back(data_sum, peer)
 		}
 	} else if payload {
 		if cmd == messageManager.MSG_CORE_LIST {
 			log.Print("refresh the core node list...")
+			// payloadでpeerの配列を受け取り、いれる
 		} else {
 			log.Print("unknown command")
+			connectionManager.call_back(data_sum, peer)
 		}
 	} else {
 		log.Print("unexpected status")

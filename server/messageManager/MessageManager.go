@@ -16,6 +16,11 @@ const (
 	MSG_PING = 4
 	MSG_ADD_AS_EDGE = 5
 	MSG_REMOVE_EDGE = 6
+	MSG_NEW_TRANSACTION = 7
+	MSG_NEW_BLOCK = 8
+	MSG_REQUEST_FULL_CHAIN = 9
+	RSP_FULL_CHAIN = 10
+	MSG_ENHANCED = 11
 
 	ERR_PROTOCOL_UNMATCH = 0
 	ERR_VERSION_UNMATCH = 1
@@ -69,10 +74,17 @@ func (message_manager *MessageManager)Parse(msg string) (string, int, int, Peer,
 		return "error", ERR_PROTOCOL_UNMATCH, 500, peer, false
 	} else if data.Version > MY_VERSION {
 		return "error", ERR_VERSION_UNMATCH, 500, peer, false
-	} else if data.Msg_type == MSG_CORE_LIST {
+	} else if needCallback(data.Msg_type) {
 		return "ok", OK_WITH_PAYLOAD, data.Msg_type, peer, true
 	} else {
 		return "ok", OK_WITHOUT_PAYLOAD, data.Msg_type, peer, false
 	}
+}
+
+func needCallback(msg_type int) bool {
+	if msg_type == MSG_CORE_LIST || msg_type == MSG_NEW_TRANSACTION || msg_type == MSG_NEW_BLOCK || msg_type == RSP_FULL_CHAIN || msg_type == MSG_ENHANCED {
+		return true
+	}
+	return false
 }
 
